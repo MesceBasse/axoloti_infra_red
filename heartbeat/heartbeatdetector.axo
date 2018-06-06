@@ -1,0 +1,116 @@
+<objdefs>
+   <obj.normal
+         id="heartbeatdetector"
+         uuid="648frpijerf64er6f84erf"
+         sha="">
+      <upgradeSha></upgradeSha>
+      <sDescription>Some description</sDescription>
+      <author>Emilie Zawadzki</author>
+      <license>LicenceType</license>
+      <helpPatch>helpfile.axh</helpPatch>
+
+      <inlets/>
+      <outlets>
+         <frac32 name="out" description="external analog control voltage input"/>
+         <frac32 name="rawvalue" description="rawvalue"/>
+         <frac32 name="maxvalue" description="maxvalue"/>
+         <bool32 name="isheartbeat" description="true if heart beat detected"/>
+      </outlets>
+      <displays/>
+      <params/>
+      <attribs>
+         <spinner name="delay" MinValue="1" MaxValue="10000" DefaultValue="60"/>
+         <combo name="channel">
+            <MenuEntries>
+               <string>PA0 (ADC1_IN0)</string>
+               <string>PA1 (ADC1_IN1)</string>
+               <string>PA2 (ADC1_IN2)</string>
+               <string>PA3 (ADC1_IN3)</string>
+               <string>PA4 (ADC1_IN4)</string>
+               <string>PA5 (ADC1_IN5)</string>
+               <string>PA6 (ADC1_IN6)</string>
+               <string>PA7 (ADC1_IN7)</string>
+               <string>PB0 (ADC1_IN8)</string>
+               <string>PB1 (ADC1_IN9)</string>
+               <string>PC0 (ADC1_IN10)</string>
+               <string>PC1 (ADC1_IN11)</string>
+               <string>PC2 (ADC1_IN12)</string>
+               <string>PC3 (ADC1_IN13)</string>
+               <string>PC4 (ADC1_IN14)</string>
+            </MenuEntries>
+            <CEntries>
+               <string>0</string>
+               <string>1</string>
+               <string>2</string>
+               <string>3</string>
+               <string>4</string>
+               <string>5</string>
+               <string>6</string>
+               <string>7</string>
+               <string>8</string>
+               <string>9</string>
+               <string>10</string>
+               <string>11</string>
+               <string>12</string>
+               <string>13</string>
+               <string>14</string>
+            </CEntries>
+         </combo>
+      </attribs>
+      <includes>
+         <include>/Applications/axoloti_runtime/platform_osx/arm-none-eabi/include/sys/unistd.h</include>
+      </includes>
+
+      <code.declaration><![CDATA[
+      ]]></code.declaration>
+
+      <code.init><![CDATA[
+      ]]></code.init>
+
+      <code.krate><![CDATA[outlet_out= adcvalues[attr_channel]<<15;
+      static int maxValue = 0;
+      static bool isPeak = false;
+      bool result = false;
+
+      int rawValue = outlet_out;
+      // La tension au phototransistor est lue et stockée dans la variable rawValue
+      rawValue *= (1000/attr_delay);
+
+      // Si la valeur de la dernière mesure dévie trop
+      // (par exemple parce que le doigt a été enlevé ou a bougé)
+      // maxValue se réinitialisee.
+      if (rawValue * 4L < maxValue) {    maxValue = rawValue * 0.8;
+      }
+
+      // Detect new peak
+      if (rawValue > maxValue - (1000/attr_delay)) {
+        // Détection de l'impulsion. Si la nouvelle rawValue est plus grande
+        // que la dernière valeur maximale, elle sera prise en compte en enregistrée
+        if (rawValue > maxValue) {
+          maxValue = rawValue;
+        }
+        // Attribution des pulsations
+        if (isPeak == false) {
+          result = true;
+        }
+        isPeak = true;
+      } else if (rawValue < maxValue - (3000/attr_delay)) {
+        isPeak = false;
+        // La valeur maximale est légèrement diminuée à chaque passage.
+        // Cela peut prendre plusieurs secondes pour détecter de nouveau
+        // le signal lorsque le doigt a bougé ou que le capteur est devant
+        // une partie osseuse du doigt. On peut aussi vérifier le délai
+        // depuis la dernière pulsation et s'il excède 1 seconde, on
+        // rénitialise maxValue
+        maxValue-=(1000/attr_delay);
+      }
+      outlet_rawvalue = rawValue;
+      outlet_maxvalue = maxValue;
+      outlet_isheartbeat=result;]]></code.krate>
+      <code.srate><![CDATA[
+      ]]></code.srate>
+
+      <!--<code.midihander><![CDATA[
+      ]]></code.midihander>-->
+   </obj.normal>
+</objdefs>
