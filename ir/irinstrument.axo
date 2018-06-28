@@ -58,15 +58,20 @@
         <include>./IRremote.h</include>
       </includes>
 
-      <code.declaration><![CDATA[#include "./IRremote.h"
-            int RECV_PIN = 3;
-            IRrecv irrecv(RECV_PIN);
-            decode_results results;]]></code.declaration>
+      <code.declaration><![CDATA[
+            ]]></code.declaration>
 
       <code.init><![CDATA[
-            irrecv.enableIRIn();]]></code.init>
+            ]]></code.init>
 
-      <code.krate><![CDATA[if(irrecv.decode(&results)) {
+      <code.krate><![CDATA[
+
+      int RECV_PIN = 3;
+      IRrecv irrecv(RECV_PIN);
+      decode_results results;
+      irrecv.enableIRIn();
+
+      if(irrecv.decode(&results)) {
         outlet_code = results.value;
         irrecv.resume(); // Receive the next value}]]></code.krate>
 
